@@ -2,6 +2,7 @@ from splinter import Browser
 from time import sleep
 from sys import argv
 from selenium import webdriver
+from twilio.rest import Client
 import re
 import os
 
@@ -28,17 +29,22 @@ months = [
 def run_script(browser, code):
     log_in(browser)
     result = check_appointments(browser, CODES[code])
+    account_sid = os.environ['TWILIO_SID']
+    auth_token  = os.environ['TWILIO_TOKEN']
+    your_number = os.environ['TWILIO_TO_NUMBER']
+    from_number = os.environ['TWILIO_FROM_NUMBER']
+    client = Client(account_sid, auth_token)
     if result is None:
         print 'no appointment'
     else:
         print result
+        message = client.messages.create(to=your_number, from_=from_number, body="New appointment available")
 
 def get_date(browser):
     text = ' '.join(node.text for node in browser.find_by_css('.background .header .date td')).lower()
     year = None
     month = None
     day = None
-    print('got a date')
     for part in re.split('[^a-z0-9]+', text):
         isint = False
         try:
